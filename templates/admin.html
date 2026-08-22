@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: #0f172a; color: #f8fafc; padding: 20px 16px; }
+        .container { max-width: 500px; margin: auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .brand { font-size: 1.25rem; font-weight: 700; color: #f8fafc; }
+        .btn-top { display: inline-block; padding: 8px 14px; background: #1e293b; color: #38bdf8; border: 1px solid #334155; border-radius: 8px; font-weight: 600; font-size: 0.85rem; text-decoration: none; }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+        .stat-card { background: #1e293b; padding: 16px; border-radius: 12px; border: 1px solid #334155; }
+        .stat-card p { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+        .stat-card h2 { font-size: 1.3rem; margin-top: 4px; font-weight: 700; color: #38bdf8; }
+
+        .section-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 12px; font-weight: 600; }
+
+        .booking-card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #334155; }
+        .booking-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .customer-name { font-weight: 700; font-size: 1rem; color: #f8fafc; }
+        
+        .badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+        .badge-pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-completed { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .info-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+        .info-row span:last-child { color: #f8fafc; font-weight: 500; }
+        
+        .divider { height: 1px; background: #334155; margin: 10px 0; }
+        
+        .price-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+        .price-val { font-size: 1.05rem; font-weight: 700; color: #38bdf8; }
+
+        .btn-complete { width: 100%; margin-top: 12px; padding: 10px; background: #10b981; color: #ffffff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand">🛠️ Admin Dashboard</div>
+            <a href="/" class="btn-top">← Back to Site</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <p>Pending Jobs</p>
+                <h2>{{ pending }}</h2>
+            </div>
+            <div class="stat-card">
+                <p>Total Revenue</p>
+                <h2>MWK {{ "{:,}".format(revenue) }}</h2>
+            </div>
+        </div>
+
+        <div class="section-title">Recent Orders</div>
+
+        {% for b in bookings %}
+        <div class="booking-card">
+            <div class="booking-header">
+                <span class="customer-name">#{{ b.id }} - {{ b.name }}</span>
+                {% if b.status == 'Completed' %}
+                    <span class="badge badge-completed">Completed</span>
+                {% else %}
+                    <span class="badge badge-pending">Pending</span>
+                {% endif %}
+            </div>
+
+            <div class="info-row"><span>Phone</span> <span>{{ b.phone }}</span></div>
+            <div class="info-row"><span>Vehicle</span> <span>{{ b.vehicle }}</span></div>
+            <div class="info-row"><span>Service</span> <span>{{ b.service }}</span></div>
+            <div class="info-row"><span>Schedule</span> <span>{{ b.date }} @ {{ b.time }}</span></div>
+
+            <div class="divider"></div>
+
+            <div class="price-row">
+                <span style="color: #94a3b8; font-weight: 500;">Total</span>
+                <span class="price-val">MWK {{ "{:,}".format(b.price) }}</span>
+            </div>
+
+            {% if b.status != 'Completed' %}
+            <form action="/complete/{{ b.id }}" method="POST">
+                <button type="submit" class="btn-complete">Mark as Finished ✓</button>
+            </form>
+            {% endif %}
+        </div>
+        {% else %}
+        <p style="color: #94a3b8; text-align: center; margin-top: 20px; font-size: 0.9rem;">No bookings found.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
