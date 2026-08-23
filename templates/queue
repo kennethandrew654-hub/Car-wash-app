@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="10">
+    <title>Live Wash Queue - Express Car Wash</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: white; padding: 20px; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; max-width: 900px; margin: 30px auto; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border-left: 5px solid #38bdf8; text-align: left; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .status { font-weight: bold; color: #f59e0b; text-transform: uppercase; font-size: 12px; margin-top: 10px; background: #0f172a; padding: 4px 8px; border-radius: 4px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <h1 style="color:#38bdf8; margin-bottom: 5px;">EXPRESS CAR WASH</h1>
+    <h2 style="color:#cbd5e1; font-weight: normal; margin-top: 0;">Live Bay Status</h2>
+    <p style="color:#94a3b8; font-size: 13px;">Auto-refreshes every 10 seconds</p>
+    
+    <div class="grid">
+        {% for item in queue %}
+        <div class="card">
+            <h3 style="margin:0 0 5px; color: #ffffff;">{{ item[1] }}</h3>
+            <p style="margin:0 0 10px; font-size:14px; color:#cbd5e1;">Owner: {{ item[0] }}</p>
+            <div style="font-size:12px; color:#94a3b8;">Package: {{ item[2] }}</div>
+            <div class="status">Stage: {{ item[3] }}</div>
+        </div>
+        {% else %}
+        <p style="grid-column: 1/-1; color: #94a3b8; margin-top: 40px;">No vehicles currently in queue. All clear!</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
