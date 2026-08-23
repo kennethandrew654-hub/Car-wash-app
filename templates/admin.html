@@ -3,58 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Wash Admin Revenue</title>
+    <title>Car Wash Admin - Live Dashboard</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f1f5f9; }
-        .container { max-width: 800px; margin: auto; }
-        .revenue-box { background: #0f172a; color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
-        .revenue-box h2 { margin: 0; font-size: 32px; color: #22c55e; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
-        th { background: #1e293b; color: white; }
-        .btn-complete { background: #22c55e; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-        .btn-delete { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .badge-pending { background: #fef08a; color: #854d0e; }
-        .badge-completed { background: #dcfce7; color: #166534; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; background: #0f172a; color: #f8fafc; }
+        .container { max-width: 900px; margin: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .revenue-title { font-size: 12px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; }
+        .revenue-num { font-size: 28px; font-weight: bold; color: #22c55e; margin: 5px 0 0; }
+        table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; font-size: 13px; }
+        th { background: #0f172a; color: #38bdf8; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; }
+        .badge-Pending { background: #fef08a; color: #854d0e; }
+        .badge-Washing { background: #38bdf8; color: #0c4a6e; }
+        .badge-Vacuuming { background: #f59e0b; color: #451a03; }
+        .badge-Ready { background: #a855f7; color: #3b0764; }
+        .badge-Completed { background: #dcfce7; color: #166534; }
+        .btn-action { border: none; padding: 6px 10px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 12px; color: white; }
+        .btn-wash { background: #0284c7; }
+        .btn-vac { background: #d97706; }
+        .btn-ready { background: #9333ea; }
+        .btn-done { background: #22c55e; }
+        .btn-del { background: #ef4444; border: none; padding: 6px 10px; border-radius: 5px; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="revenue-box">
-            <p style="margin:0; font-size:14px; text-transform:uppercase; letter-spacing:1px; color:#94a3b8;">Total Completed Revenue</p>
-            <h2>MK {{ "{:,}".format(total_revenue) }}</h2>
+        <div class="header">
+            <div>
+                <h2 style="margin:0; font-size:20px; color:#38bdf8;">CAR WASH DASHBOARD</h2>
+                <span class="revenue-title">Live Queue & Revenue Tracker</span>
+            </div>
+            <div style="text-align:right;">
+                <div class="revenue-title">Completed Revenue</div>
+                <div class="revenue-num">MK {{ "{:,}".format(total_revenue) }}</div>
+            </div>
         </div>
 
-        <h3>Recent Bookings</h3>
+        <h3 style="color:#cbd5e1; font-size:16px;">Active Booking Queue</h3>
         <table>
             <thead>
                 <tr>
-                    <th>Client</th>
-                    <th>Car</th>
-                    <th>Service</th>
-                    <th>Price</th>
+                    <th>Customer</th>
+                    <th>Car Details</th>
+                    <th>Package & Add-Ons</th>
+                    <th>Total</th>
                     <th>Status</th>
-                    <th>Action</th>
+                    <th>Pipeline Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for b in bookings %}
                 <tr>
-                    <td><strong>{{ b[1] }}</strong><br><small>{{ b[2] }}</small></td>
+                    <td><strong>{{ b[1] }}</strong><br><small style="color:#94a3b8;">{{ b[2] }}</small></td>
                     <td>{{ b[3] }}</td>
-                    <td>{{ b[4] }}</td>
-                    <td>MK {{ "{:,}".format(b[5]) }}</td>
-                    <td>
-                        <span class="badge {{ 'badge-completed' if b[6] == 'Completed' else 'badge-pending' }}">{{ b[6] }}</span>
-                    </td>
+                    <td><strong>{{ b[4] }}</strong><br><small style="color:#94a3b8;">Add-ons: {{ b[5] }}</small></td>
+                    <td style="color:#22c55e; font-weight:bold;">MK {{ "{:,}".format(b[6]) }}</td>
+                    <td><span class="badge badge-{{ b[7] }}">{{ b[7] }}</span></td>
                     <td>
                         <form method="POST" style="display:inline;">
                             <input type="hidden" name="id" value="{{ b[0] }}">
-                            {% if b[6] == 'Pending' %}
-                            <button type="submit" name="action" value="complete" class="btn-complete">Done</button>
+                            <input type="hidden" name="phone" value="{{ b[2] }}">
+                            
+                            {% if b[7] == 'Pending' %}
+                                <button type="submit" name="action" value="Washing" class="btn-action btn-wash">Start Wash</button>
+                            {% elif b[7] == 'Washing' %}
+                                <button type="submit" name="action" value="Vacuuming" class="btn-action btn-vac">To Vacuum</button>
+                            {% elif b[7] == 'Vacuuming' %}
+                                <button type="submit" name="action" value="Ready" class="btn-action btn-ready">Mark Ready</button>
+                            {% elif b[7] == 'Ready' %}
+                                <button type="submit" name="action" value="Completed" class="btn-action btn-done">Finish (+Stamp)</button>
                             {% endif %}
-                            <button type="submit" name="action" value="delete" class="btn-delete">X</button>
+                            <button type="submit" name="action" value="delete" class="btn-del">X</button>
                         </form>
                     </td>
                 </tr>
@@ -64,3 +84,4 @@
     </div>
 </body>
 </html>
+
