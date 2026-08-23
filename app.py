@@ -104,7 +104,7 @@ def book():
     conn.commit()
     conn.close()
 
-    my_whatsapp = "265999000000"  # Replace with your actual phone number
+    my_whatsapp = "265991554333"  # Replace with your actual phone number
     loyalty_msg = "\n🎉 LOYALTY ALERT: This is your 10th Wash! Base wash is FREE!" if is_free_wash else f"\nLoyalty Stamps: {current_washes + 1}/10"
     
     message = f"Hello! New Car Wash Booking:\n\nName: {name}\nPhone: {phone}\nCar: {car_model}\nPackage: {service_name}\nAdd-ons: {addons_str}\nTotal: MK {total_price:,}{loyalty_msg}"
