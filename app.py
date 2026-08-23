@@ -1,106 +1,90 @@
-import os
+from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for
+import os
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
+app = Flask(__name__)
+app.secret_key = 'carwash_secret_key_malawi'
 
-subfolders = [f for f in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, f))]
-template_folder_name = next((f for f in subfolders if f.strip().lower() == 'templates'), 'templates')
-template_dir = os.path.join(base_dir, template_folder_name)
-
-app = Flask(__name__, template_folder=template_dir)
-
-SERVICES = {
-    'Basic Wash': 5000,
-    'Deluxe Wash': 10000,
-    'Full Detail': 25000
-}
-
-DB_PATH = os.path.join(base_dir, 'carwash.db')
+DB_NAME = "carwash.db"
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            phone TEXT,
-            vehicle TEXT,
-            service TEXT,
-            price INTEGER,
-            date TEXT,
-            time TEXT,
+            client_name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            car_model TEXT NOT NULL,
+            service TEXT NOT NULL,
+            price INTEGER NOT NULL,
             status TEXT DEFAULT 'Pending'
         )
     ''')
-    
-    # Safely add status column if database existed previously without it
-    cursor.execute("PRAGMA table_info(bookings)")
-    columns = [column[1] for column in cursor.fetchall()]
-    if 'status' not in columns:
-        cursor.execute("ALTER TABLE bookings ADD COLUMN status TEXT DEFAULT 'Pending'")
-
     conn.commit()
     conn.close()
 
 init_db()
 
+SERVICES = [
+    {"name": "Body Wash & Drying", "price": 5000, "desc": "High-pressure exterior wash, wheel shine, and micro-fiber dry."},
+    {"name": "Executive Full Wash", "price": 10000, "desc": "Exterior wash, deep interior vacuuming, dashboard shine, and tire dressing."},
+    {"name": "Full Detail & Engine Bay", "price": 20000, "desc": "Full executive wash + engine bay degreasing and interior upholstery shampoo."}
+]
+
 @app.route('/')
-def home():
+def index():
     return render_template('index.html', services=SERVICES)
 
 @app.route('/book', methods=['POST'])
 def book():
     name = request.form.get('name')
     phone = request.form.get('phone')
-    vehicle = request.form.get('vehicle')
-    service = request.form.get('service')
-    date = request.form.get('date')
-    time = request.form.get('time')
-    price = SERVICES.get(service, 0)
+    car_model = request.form.get('car_model')
+    service_info = request.form.get('service').split('|')
+    
+    service_name = service_info[0]
+    price = int(service_info[1])
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO bookings (name, phone, vehicle, service, price, date, time, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')
-    ''', (name, phone, vehicle, service, price, date, time))
+        INSERT INTO bookings (client_name, phone, car_model, service, price)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (name, phone, car_model, service_name, price))
     conn.commit()
     conn.close()
 
-    return render_template('success.html', 
-                           name=name, 
-                           phone=phone, 
-                           vehicle=vehicle, 
-                           service=service, 
-                           price=price, 
-                           date=date, 
-                           time=time)
+    # Pre-filled WhatsApp message redirect
+    my_whatsapp = "265991554333" # Put your WhatsApp phone number here
+    message = f"Hello! New Car Wash Booking Request:\n\nName: {name}\nPhone: {phone}\nCar: {car_model}\nService: {service_name}\nPrice: MK {price:,}"
+    whatsapp_url = f"https://wa.me/{my_whatsapp}?text={message.replace(' ', '%20').replace('\n', '%0A')}"
 
-@app.route('/admin')
+    return redirect(whatsapp_url)
+
+@app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM bookings ORDER BY id DESC')
-    rows = cursor.fetchall()
+
+    if request.method == 'POST':
+        booking_id = request.form.get('id')
+        action = request.form.get('action')
+        if action == 'complete':
+            cursor.execute("UPDATE bookings SET status = 'Completed' WHERE id = ?", (booking_id,))
+        elif action == 'delete':
+            cursor.execute("DELETE FROM bookings WHERE id = ?", (booking_id,))
+        conn.commit()
+
+    cursor.execute("SELECT * FROM bookings ORDER BY id DESC")
+    bookings = cursor.fetchall()
+
+    cursor.execute("SELECT SUM(price) FROM bookings WHERE status = 'Completed'")
+    total_revenue = cursor.fetchone()[0] or 0
+
     conn.close()
-
-    bookings = [dict(row) for row in rows]
-    total_revenue = sum(b['price'] for b in bookings if b.get('status') == 'Completed')
-    pending_count = len([b for b in bookings if b.get('status') == 'Pending'])
-
-    return render_template('admin.html', bookings=bookings, revenue=total_revenue, pending=pending_count)
-
-@app.route('/complete/<int:booking_id>', methods=['POST'])
-def complete_booking(booking_id):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("UPDATE bookings SET status = 'Completed' WHERE id = ?", (booking_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('admin'))
+    return render_template('admin.html', bookings=bookings, total_revenue=total_revenue)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True)
+
